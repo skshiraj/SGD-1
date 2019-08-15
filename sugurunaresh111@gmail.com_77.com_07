@@ -1,0 +1,2303 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {
+    "colab": {},
+    "colab_type": "code",
+    "id": "I2S-uFqwSvmg"
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd\n",
+    "from sklearn.datasets import make_classification"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {
+    "colab": {},
+    "colab_type": "code",
+    "id": "FUxLkBjISvmr"
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "-- Epoch 1\n",
+      "Norm: 0.77, NNZs: 15, Bias: -0.316653, T: 37500, Avg. loss: 0.455552\n",
+      "Total training time: 0.02 seconds.\n",
+      "-- Epoch 2\n",
+      "Norm: 0.91, NNZs: 15, Bias: -0.472747, T: 75000, Avg. loss: 0.394686\n",
+      "Total training time: 0.03 seconds.\n",
+      "-- Epoch 3\n",
+      "Norm: 0.98, NNZs: 15, Bias: -0.580082, T: 112500, Avg. loss: 0.385711\n",
+      "Total training time: 0.04 seconds.\n",
+      "-- Epoch 4\n",
+      "Norm: 1.02, NNZs: 15, Bias: -0.658292, T: 150000, Avg. loss: 0.382083\n",
+      "Total training time: 0.08 seconds.\n",
+      "-- Epoch 5\n",
+      "Norm: 1.04, NNZs: 15, Bias: -0.719528, T: 187500, Avg. loss: 0.380486\n",
+      "Total training time: 0.09 seconds.\n",
+      "-- Epoch 6\n",
+      "Norm: 1.05, NNZs: 15, Bias: -0.763409, T: 225000, Avg. loss: 0.379578\n",
+      "Total training time: 0.11 seconds.\n",
+      "-- Epoch 7\n",
+      "Norm: 1.06, NNZs: 15, Bias: -0.795106, T: 262500, Avg. loss: 0.379150\n",
+      "Total training time: 0.12 seconds.\n",
+      "-- Epoch 8\n",
+      "Norm: 1.06, NNZs: 15, Bias: -0.819925, T: 300000, Avg. loss: 0.378856\n",
+      "Total training time: 0.14 seconds.\n",
+      "-- Epoch 9\n",
+      "Norm: 1.07, NNZs: 15, Bias: -0.837805, T: 337500, Avg. loss: 0.378585\n",
+      "Total training time: 0.17 seconds.\n",
+      "-- Epoch 10\n",
+      "Norm: 1.08, NNZs: 15, Bias: -0.853138, T: 375000, Avg. loss: 0.378630\n",
+      "Total training time: 0.19 seconds.\n",
+      "Convergence after 10 epochs took 0.19 seconds\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "(array([[-0.42336692,  0.18547565, -0.14859036,  0.34144407, -0.2081867 ,\n",
+       "          0.56016579, -0.45242483, -0.09408813,  0.2092732 ,  0.18084126,\n",
+       "          0.19705191,  0.00421916, -0.0796037 ,  0.33852802,  0.02266721]]),\n",
+       " (1, 15),\n",
+       " array([-0.8531383]))"
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X, y = make_classification(n_samples=50000, n_features=15, n_informative=10, n_redundant=5,\n",
+    "                           n_classes=2, weights=[0.7], class_sep=0.7, random_state=15)\n",
+    "X.shape, y.shape\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=15)\n",
+    "X_train.shape, y_train.shape, X_test.shape, y_test.shape\n",
+    "from sklearn import linear_model\n",
+    "clf = linear_model.SGDClassifier(eta0=0.0001, alpha=0.0001, loss='log', random_state=15, penalty='l2', tol=1e-3, verbose=2, learning_rate='constant')\n",
+    "clf\n",
+    "clf.fit(X=X_train, y=y_train)\n",
+    "clf.coef_, clf.coef_.shape, clf.intercept_\n",
+    "# alpha : float\n",
+    "# Constant that multiplies the regularization term. \n",
+    "\n",
+    "# eta0 : double\n",
+    "# The initial learning rate for the ‘constant’, ‘invscaling’ or ‘adaptive’ schedules."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {
+    "colab_type": "text",
+    "id": "Su9e8fRLSvno"
+   },
+   "source": [
+    " "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 44,
+   "metadata": {
+    "colab": {},
+    "colab_type": "code",
+    "id": "48gx6wQKSvoE",
+    "outputId": "73838465-1f8e-4697-fe22-c49a816e1207"
+   },
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import math\n",
+    "from tqdm import tqdm\n",
+    "\n",
+    "def sigmoid(w,x,b):\n",
+    "    return 1/(1+np.exp(-(np.dot(x,w)+b)))  \n",
+    "\n",
+    "def coefficients_sgd(x_train,x_test,y_train,y_test,n_epoch,):\n",
+    "    coef = np.random.normal(0, 0.1, size=(len(x_train[0])))\n",
+    "    intcpt=np.random.normal(0,0.1)\n",
+    "    alpha=0.001\n",
+    "    lamda=0.001\n",
+    "    N = len(X_train)\n",
+    "    LOSS_TRAIN=[]\n",
+    "    LOSS_TEST=[]\n",
+    "    for epoch in tqdm(range(n_epoch)):\n",
+    "        for i in range(len(x_train)):\n",
+    "            dcoef=(x_train[i]*(y_train[i]-sigmoid(coef,x_train[i],intcpt)))\n",
+    "            dintcpt=(y_train[i]-sigmoid(coef,x_train[i],intcpt))\n",
+    "            coef=((1-(alpha*lamda)/N)*coef+alpha*dcoef)\n",
+    "            intcpt=((1-(alpha*lamda)/N)*intcpt+(alpha*dintcpt))\n",
+    "        ypred_train=sigmoid(coef,x_train,intcpt)  \n",
+    "        ypred_test=sigmoid(coef,x_test,intcpt)\n",
+    "        loss_train=0\n",
+    "        for i in range(len(y_train)):\n",
+    "                loss_train=-((y_train[i]*(math.log(ypred_train[i])))+ ((1-y_train[i])*(math.log(1-ypred_train[i]))))\n",
+    "        for j in range(len(y_test)):\n",
+    "                loss_test=-((y_test[j]*(math.log(ypred_test[j])))+ ((1-y_test[j])*(math.log(1-ypred_test[j]))))                \n",
+    "        Avg_Loss_Train=loss_train/len(y_train)       \n",
+    "        LOSS_TRAIN.append(Avg_Loss_Train)\n",
+    "        Avg_Loss_Test=loss_test/len(y_test)       \n",
+    "        LOSS_TEST.append(Avg_Loss_Test)        \n",
+    "        print(\"epoch=\",epoch,\"; Loss_Train:\",Avg_Loss_Train,\"Loss_Test\",Avg_Loss_Test)\n",
+    "    return coef,intcpt,LOSS_TRAIN,LOSS_TEST"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 45,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  0%|                                                                                          | 0/125 [00:00<?, ?it/s]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 0 ; Loss_Train: 1.4475087647129872e-05 Loss_Test 7.404429553296703e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  1%|▋                                                                                 | 1/125 [00:01<02:06,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 1 ; Loss_Train: 1.4438467302761018e-05 Loss_Test 7.251620028241813e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  2%|█▎                                                                                | 2/125 [00:02<02:05,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 2 ; Loss_Train: 1.4436269810386812e-05 Loss_Test 7.242333990723633e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  2%|█▉                                                                                | 3/125 [00:03<02:04,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 3 ; Loss_Train: 1.4436133107232305e-05 Loss_Test 7.241755278265023e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  3%|██▌                                                                               | 4/125 [00:04<02:03,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 4 ; Loss_Train: 1.4436124573435198e-05 Loss_Test 7.241719146221512e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  4%|███▎                                                                              | 5/125 [00:05<02:02,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 5 ; Loss_Train: 1.4436124040564499e-05 Loss_Test 7.241716890025416e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  5%|███▉                                                                              | 6/125 [00:06<02:01,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 6 ; Loss_Train: 1.4436124007290143e-05 Loss_Test 7.241716749140388e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  6%|████▌                                                                             | 7/125 [00:07<02:00,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 7 ; Loss_Train: 1.4436124005212403e-05 Loss_Test 7.241716740343009e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  6%|█████▏                                                                            | 8/125 [00:08<01:59,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 8 ; Loss_Train: 1.4436124005082677e-05 Loss_Test 7.241716739793673e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  7%|█████▉                                                                            | 9/125 [00:09<01:58,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 9 ; Loss_Train: 1.4436124005074528e-05 Loss_Test 7.241716739759386e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  8%|██████▍                                                                          | 10/125 [00:10<01:58,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 10 ; Loss_Train: 1.443612400507404e-05 Loss_Test 7.241716739757237e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "  9%|███████▏                                                                         | 11/125 [00:11<01:57,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 11 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.241716739757098e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 10%|███████▊                                                                         | 12/125 [00:12<01:56,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 12 ; Loss_Train: 1.443612400507404e-05 Loss_Test 7.241716739757086e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 10%|████████▍                                                                        | 13/125 [00:13<01:55,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 13 ; Loss_Train: 1.4436124005074022e-05 Loss_Test 7.241716739757088e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 11%|█████████                                                                        | 14/125 [00:14<01:54,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 14 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757091e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 12%|█████████▋                                                                       | 15/125 [00:15<01:53,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 15 ; Loss_Train: 1.4436124005074e-05 Loss_Test 7.241716739757095e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 13%|██████████▎                                                                      | 16/125 [00:16<01:53,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 16 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757095e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 14%|███████████                                                                      | 17/125 [00:17<01:52,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 17 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757091e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 14%|███████████▋                                                                     | 18/125 [00:18<01:50,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 18 ; Loss_Train: 1.4436124005074022e-05 Loss_Test 7.241716739757086e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 15%|████████████▎                                                                    | 19/125 [00:19<01:49,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 19 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 16%|████████████▉                                                                    | 20/125 [00:20<01:47,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 20 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 17%|█████████████▌                                                                   | 21/125 [00:21<01:47,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 21 ; Loss_Train: 1.4436124005073988e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 18%|██████████████▎                                                                  | 22/125 [00:22<01:45,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 22 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 18%|██████████████▉                                                                  | 23/125 [00:23<01:44,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 23 ; Loss_Train: 1.4436124005073988e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 19%|███████████████▌                                                                 | 24/125 [00:24<01:44,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 24 ; Loss_Train: 1.4436124005073973e-05 Loss_Test 7.241716739757084e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 20%|████████████████▏                                                                | 25/125 [00:25<01:42,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 25 ; Loss_Train: 1.4436124005073978e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 21%|████████████████▊                                                                | 26/125 [00:26<01:41,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 26 ; Loss_Train: 1.4436124005073984e-05 Loss_Test 7.241716739757084e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 22%|█████████████████▍                                                               | 27/125 [00:27<01:40,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 27 ; Loss_Train: 1.4436124005073993e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 22%|██████████████████▏                                                              | 28/125 [00:28<01:39,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 28 ; Loss_Train: 1.4436124005074e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 23%|██████████████████▊                                                              | 29/125 [00:29<01:41,  1.05s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 29 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 24%|███████████████████▍                                                             | 30/125 [00:31<01:41,  1.07s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 30 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 25%|████████████████████                                                             | 31/125 [00:32<01:40,  1.07s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 31 ; Loss_Train: 1.4436124005074044e-05 Loss_Test 7.241716739757084e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 26%|████████████████████▋                                                            | 32/125 [00:33<01:38,  1.05s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 32 ; Loss_Train: 1.4436124005074044e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 26%|█████████████████████▍                                                           | 33/125 [00:34<01:36,  1.05s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 33 ; Loss_Train: 1.4436124005074034e-05 Loss_Test 7.241716739757086e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 27%|██████████████████████                                                           | 34/125 [00:35<01:34,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 34 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.241716739757086e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 28%|██████████████████████▋                                                          | 35/125 [00:36<01:33,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 35 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 29%|███████████████████████▎                                                         | 36/125 [00:37<01:32,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 36 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 30%|███████████████████████▉                                                         | 37/125 [00:38<01:30,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 37 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 30%|████████████████████████▌                                                        | 38/125 [00:39<01:29,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 38 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 31%|█████████████████████████▎                                                       | 39/125 [00:40<01:27,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 39 ; Loss_Train: 1.4436124005074022e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 32%|█████████████████████████▉                                                       | 40/125 [00:41<01:26,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 40 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 33%|██████████████████████████▌                                                      | 41/125 [00:42<01:25,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 41 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 34%|███████████████████████████▏                                                     | 42/125 [00:43<01:24,  1.01s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 42 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 34%|███████████████████████████▊                                                     | 43/125 [00:44<01:22,  1.01s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 43 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 35%|████████████████████████████▌                                                    | 44/125 [00:45<01:21,  1.01s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 44 ; Loss_Train: 1.4436124005073993e-05 Loss_Test 7.241716739757088e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 36%|█████████████████████████████▏                                                   | 45/125 [00:46<01:20,  1.01s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 45 ; Loss_Train: 1.4436124005073988e-05 Loss_Test 7.241716739757086e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 37%|█████████████████████████████▊                                                   | 46/125 [00:47<01:19,  1.01s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 46 ; Loss_Train: 1.4436124005073988e-05 Loss_Test 7.241716739757091e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 38%|██████████████████████████████▍                                                  | 47/125 [00:48<01:18,  1.01s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 47 ; Loss_Train: 1.4436124005073988e-05 Loss_Test 7.241716739757088e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 38%|███████████████████████████████                                                  | 48/125 [00:49<01:18,  1.01s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 48 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 39%|███████████████████████████████▊                                                 | 49/125 [00:50<01:17,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 49 ; Loss_Train: 1.4436124005074044e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 40%|████████████████████████████████▍                                                | 50/125 [00:51<01:16,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 50 ; Loss_Train: 1.4436124005074064e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 41%|█████████████████████████████████                                                | 51/125 [00:52<01:15,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 51 ; Loss_Train: 1.4436124005074057e-05 Loss_Test 7.241716739757071e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 42%|█████████████████████████████████▋                                               | 52/125 [00:53<01:14,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 52 ; Loss_Train: 1.4436124005074057e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 42%|██████████████████████████████████▎                                              | 53/125 [00:54<01:13,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 53 ; Loss_Train: 1.4436124005074044e-05 Loss_Test 7.241716739757078e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 43%|██████████████████████████████████▉                                              | 54/125 [00:55<01:12,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 54 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.241716739757078e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 44%|███████████████████████████████████▋                                             | 55/125 [00:56<01:11,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 55 ; Loss_Train: 1.4436124005074044e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 45%|████████████████████████████████████▎                                            | 56/125 [00:57<01:10,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 56 ; Loss_Train: 1.4436124005074064e-05 Loss_Test 7.241716739757068e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 46%|████████████████████████████████████▉                                            | 57/125 [00:58<01:09,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 57 ; Loss_Train: 1.4436124005074069e-05 Loss_Test 7.241716739757065e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 46%|█████████████████████████████████████▌                                           | 58/125 [00:59<01:08,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 58 ; Loss_Train: 1.44361240050741e-05 Loss_Test 7.241716739757065e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 47%|██████████████████████████████████████▏                                          | 59/125 [01:00<01:07,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 59 ; Loss_Train: 1.4436124005074091e-05 Loss_Test 7.241716739757067e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 48%|██████████████████████████████████████▉                                          | 60/125 [01:01<01:06,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 60 ; Loss_Train: 1.4436124005074057e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 49%|███████████████████████████████████████▌                                         | 61/125 [01:02<01:06,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 61 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 50%|████████████████████████████████████████▏                                        | 62/125 [01:03<01:05,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 62 ; Loss_Train: 1.443612400507404e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 50%|████████████████████████████████████████▊                                        | 63/125 [01:04<01:05,  1.05s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 63 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 51%|█████████████████████████████████████████▍                                       | 64/125 [01:05<01:04,  1.06s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 64 ; Loss_Train: 1.4436124005074e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 52%|██████████████████████████████████████████                                       | 65/125 [01:06<01:03,  1.06s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 65 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 53%|██████████████████████████████████████████▊                                      | 66/125 [01:08<01:02,  1.06s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 66 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 54%|███████████████████████████████████████████▍                                     | 67/125 [01:09<01:02,  1.08s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 67 ; Loss_Train: 1.4436124005074022e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 54%|████████████████████████████████████████████                                     | 68/125 [01:10<01:01,  1.08s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 68 ; Loss_Train: 1.4436124005074034e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 55%|████████████████████████████████████████████▋                                    | 69/125 [01:11<00:59,  1.07s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 69 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.241716739757071e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 56%|█████████████████████████████████████████████▎                                   | 70/125 [01:12<00:58,  1.07s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 70 ; Loss_Train: 1.443612400507408e-05 Loss_Test 7.241716739757065e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 57%|██████████████████████████████████████████████                                   | 71/125 [01:13<00:57,  1.06s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 71 ; Loss_Train: 1.4436124005074069e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 58%|██████████████████████████████████████████████▋                                  | 72/125 [01:14<00:55,  1.05s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 72 ; Loss_Train: 1.4436124005074057e-05 Loss_Test 7.241716739757078e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 58%|███████████████████████████████████████████████▎                                 | 73/125 [01:15<00:54,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 73 ; Loss_Train: 1.4436124005074057e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 59%|███████████████████████████████████████████████▉                                 | 74/125 [01:16<00:52,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 74 ; Loss_Train: 1.4436124005074044e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 60%|████████████████████████████████████████████████▌                                | 75/125 [01:17<00:51,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 75 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.241716739757068e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 61%|█████████████████████████████████████████████████▏                               | 76/125 [01:18<00:50,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 76 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.241716739757067e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 62%|█████████████████████████████████████████████████▉                               | 77/125 [01:19<00:49,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 77 ; Loss_Train: 1.4436124005074044e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 62%|██████████████████████████████████████████████████▌                              | 78/125 [01:20<00:48,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 78 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.241716739757067e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 63%|███████████████████████████████████████████████████▏                             | 79/125 [01:21<00:47,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 79 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 64%|███████████████████████████████████████████████████▊                             | 80/125 [01:22<00:46,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 80 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.241716739757068e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 65%|████████████████████████████████████████████████████▍                            | 81/125 [01:23<00:45,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 81 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.241716739757068e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 66%|█████████████████████████████████████████████████████▏                           | 82/125 [01:24<00:44,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 82 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 66%|█████████████████████████████████████████████████████▊                           | 83/125 [01:25<00:43,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 83 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.241716739757068e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 67%|██████████████████████████████████████████████████████▍                          | 84/125 [01:26<00:42,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 84 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 68%|███████████████████████████████████████████████████████                          | 85/125 [01:27<00:41,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 85 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.24171673975706e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 69%|███████████████████████████████████████████████████████▋                         | 86/125 [01:28<00:40,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 86 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.241716739757065e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 70%|████████████████████████████████████████████████████████▍                        | 87/125 [01:29<00:39,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 87 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.241716739757067e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 70%|█████████████████████████████████████████████████████████                        | 88/125 [01:30<00:38,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 88 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 71%|█████████████████████████████████████████████████████████▋                       | 89/125 [01:31<00:37,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 89 ; Loss_Train: 1.4436124005074044e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 72%|██████████████████████████████████████████████████████████▎                      | 90/125 [01:32<00:36,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 90 ; Loss_Train: 1.4436124005074064e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 73%|██████████████████████████████████████████████████████████▉                      | 91/125 [01:34<00:34,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 91 ; Loss_Train: 1.4436124005074057e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 74%|███████████████████████████████████████████████████████████▌                     | 92/125 [01:35<00:34,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 92 ; Loss_Train: 1.4436124005074064e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 74%|████████████████████████████████████████████████████████████▎                    | 93/125 [01:36<00:33,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 93 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.241716739757078e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 75%|████████████████████████████████████████████████████████████▉                    | 94/125 [01:37<00:32,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 94 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 76%|█████████████████████████████████████████████████████████████▌                   | 95/125 [01:38<00:30,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 95 ; Loss_Train: 1.443612400507404e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 77%|██████████████████████████████████████████████████████████████▏                  | 96/125 [01:39<00:29,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 96 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 78%|██████████████████████████████████████████████████████████████▊                  | 97/125 [01:40<00:28,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 97 ; Loss_Train: 1.4436124005074044e-05 Loss_Test 7.241716739757071e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 78%|███████████████████████████████████████████████████████████████▌                 | 98/125 [01:41<00:27,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 98 ; Loss_Train: 1.4436124005074057e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 79%|████████████████████████████████████████████████████████████████▏                | 99/125 [01:42<00:26,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 99 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 80%|████████████████████████████████████████████████████████████████                | 100/125 [01:43<00:25,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 100 ; Loss_Train: 1.443612400507404e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 81%|████████████████████████████████████████████████████████████████▋               | 101/125 [01:44<00:24,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 101 ; Loss_Train: 1.4436124005074057e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 82%|█████████████████████████████████████████████████████████████████▎              | 102/125 [01:45<00:23,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 102 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.241716739757078e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 82%|█████████████████████████████████████████████████████████████████▉              | 103/125 [01:46<00:22,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 103 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 83%|██████████████████████████████████████████████████████████████████▌             | 104/125 [01:47<00:21,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 104 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.241716739757071e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 84%|███████████████████████████████████████████████████████████████████▏            | 105/125 [01:48<00:20,  1.02s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 105 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.241716739757067e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 85%|███████████████████████████████████████████████████████████████████▊            | 106/125 [01:49<00:19,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 106 ; Loss_Train: 1.4436124005074028e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 86%|████████████████████████████████████████████████████████████████████▍           | 107/125 [01:50<00:18,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 107 ; Loss_Train: 1.443612400507402e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 86%|█████████████████████████████████████████████████████████████████████           | 108/125 [01:51<00:17,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 108 ; Loss_Train: 1.443612400507404e-05 Loss_Test 7.241716739757067e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 87%|█████████████████████████████████████████████████████████████████████▊          | 109/125 [01:52<00:16,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 109 ; Loss_Train: 1.4436124005074056e-05 Loss_Test 7.241716739757065e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 88%|██████████████████████████████████████████████████████████████████████▍         | 110/125 [01:53<00:15,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 110 ; Loss_Train: 1.4436124005074069e-05 Loss_Test 7.241716739757065e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 89%|███████████████████████████████████████████████████████████████████████         | 111/125 [01:54<00:14,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 111 ; Loss_Train: 1.4436124005074057e-05 Loss_Test 7.241716739757067e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 90%|███████████████████████████████████████████████████████████████████████▋        | 112/125 [01:55<00:13,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 112 ; Loss_Train: 1.443612400507408e-05 Loss_Test 7.241716739757068e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 90%|████████████████████████████████████████████████████████████████████████▎       | 113/125 [01:56<00:12,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 113 ; Loss_Train: 1.443612400507408e-05 Loss_Test 7.241716739757068e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 91%|████████████████████████████████████████████████████████████████████████▉       | 114/125 [01:57<00:11,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 114 ; Loss_Train: 1.443612400507404e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 92%|█████████████████████████████████████████████████████████████████████████▌      | 115/125 [01:58<00:10,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 115 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757084e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 93%|██████████████████████████████████████████████████████████████████████████▏     | 116/125 [01:59<00:09,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 116 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757086e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 94%|██████████████████████████████████████████████████████████████████████████▉     | 117/125 [02:00<00:08,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 117 ; Loss_Train: 1.443612400507404e-05 Loss_Test 7.241716739757072e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 94%|███████████████████████████████████████████████████████████████████████████▌    | 118/125 [02:01<00:07,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 118 ; Loss_Train: 1.4436124005074044e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 95%|████████████████████████████████████████████████████████████████████████████▏   | 119/125 [02:02<00:06,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 119 ; Loss_Train: 1.4436124005074049e-05 Loss_Test 7.241716739757075e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 96%|████████████████████████████████████████████████████████████████████████████▊   | 120/125 [02:03<00:05,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 120 ; Loss_Train: 1.4436124005074022e-05 Loss_Test 7.241716739757086e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 97%|█████████████████████████████████████████████████████████████████████████████▍  | 121/125 [02:04<00:04,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 121 ; Loss_Train: 1.443612400507404e-05 Loss_Test 7.241716739757084e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 98%|██████████████████████████████████████████████████████████████████████████████  | 122/125 [02:05<00:03,  1.04s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 122 ; Loss_Train: 1.443612400507404e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 98%|██████████████████████████████████████████████████████████████████████████████▋ | 123/125 [02:06<00:02,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 123 ; Loss_Train: 1.4436124005074034e-05 Loss_Test 7.24171673975708e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      " 99%|███████████████████████████████████████████████████████████████████████████████▎| 124/125 [02:07<00:01,  1.03s/it]"
+     ]
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "epoch= 124 ; Loss_Train: 1.4436124005074008e-05 Loss_Test 7.241716739757082e-05\n"
+     ]
+    },
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "\n",
+      "100%|████████████████████████████████████████████████████████████████████████████████| 125/125 [02:08<00:00,  1.03s/it]"
+     ]
+    }
+   ],
+   "source": [
+    "coef,intcpt,LOSS_TRAIN,LOSS_TEST = coefficients_sgd(X_train,X_test,y_train,y_test,125)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 31,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Coeficients: [-0.44111805  0.20645173 -0.18764973  0.39600147 -0.31615513  0.46151931\n",
+      " -0.4008853   0.11739699  0.1411747   0.13449745  0.18814554  0.0228939\n",
+      "  0.12568807  0.56950933  0.10128067]\n",
+      "\n",
+      "Intercept= -0.9016732865682981\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"Coeficients:\",coef)\n",
+    "print(\"\\nIntercept=\",intcpt)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 34,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[[0.01775114 0.02097608 0.03905937 0.0545574  0.10796843 0.09864647\n",
+      "  0.05153953 0.21148512 0.0680985  0.04634381 0.00890636 0.01867474\n",
+      "  0.20529177 0.23098131 0.07861346]]\n",
+      "\n",
+      " [0.04853499]\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(abs(coef-clf.coef_))\n",
+    "print(\"\\n\",abs(intcpt-clf.intercept_))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 50,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "image/png": "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\n",
+      "text/plain": [
+       "<Figure size 432x288 with 1 Axes>"
+      ]
+     },
+     "metadata": {
+      "needs_background": "light"
+     },
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "import matplotlib.pyplot as plt\n",
+    "error_train=[]\n",
+    "error_train.append(LOSS_TRAIN[0])\n",
+    "error_train.append(LOSS_TRAIN[5])\n",
+    "error_train.append(LOSS_TRAIN[10])\n",
+    "error_train.append(LOSS_TRAIN[15])\n",
+    "error_train.append(LOSS_TRAIN[24])\n",
+    "\n",
+    "error_test=[]\n",
+    "error_test.append(LOSS_TEST[0])\n",
+    "error_test.append(LOSS_TEST[24])\n",
+    "error_test.append(LOSS_TEST[49])\n",
+    "error_test.append(LOSS_TEST[99])\n",
+    "error_test.append(LOSS_TEST[124])\n",
+    "\n",
+    "\n",
+    "epoch=[1,25,50,100,125]\n",
+    "plt.plot(epoch,error_train, label='Train')\n",
+    "plt.plot(epoch,error_test, label='Test')\n",
+    "\n",
+    "plt.scatter(epoch,error_train)\n",
+    "plt.scatter(epoch,error_test)\n",
+    "\n",
+    "plt.legend()\n",
+    "plt.xlabel(\"epoch\")\n",
+    "plt.ylabel(\"ERROR\")\n",
+    "plt.title(\"ERROR PLOTS\")\n",
+    "plt.grid()\n",
+    "plt.show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "colab": {
+   "collapsed_sections": [],
+   "name": "Logistic Regression using SGD.ipynb",
+   "provenance": [],
+   "version": "0.3.2"
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 1
+}
